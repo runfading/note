@@ -18,7 +18,7 @@ onMounted(async () => {
   if (!containerRef.value) return
   crepe = new Crepe({
     root: containerRef.value,
-    defaultValue: props.modelValue,
+    defaultValue: props.modelValue, 
   })
   await crepe.create()
   ready.value = true
