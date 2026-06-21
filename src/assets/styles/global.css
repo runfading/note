@@ -1,0 +1,171 @@
+/* ============================================================
+   全局 CSS 变量 & 基础样式 —— 从 HTML 原型迁移
+   ============================================================ */
+:root {
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #ffffff;
+  --bg-sidebar: #fafafa;
+  --bg-editor: #ffffff;
+  --bg-hover: #f0f0f0;
+  --bg-active: #e3f2fd;
+  --bg-input: #f5f5f5;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555;
+  --text-tertiary: #888;
+  --text-placeholder: #aaa;
+  --border-color: #e0e0e0;
+  --border-light: #eee;
+  --accent: #4a90d9;
+  --accent-hover: #357abd;
+  --accent-light: #e8f0fe;
+  --danger: #e05555;
+  --danger-hover: #c94444;
+  --danger-light: #fde8e8;
+  --tag-bg: #e8f0fe;
+  --tag-text: #4a90d9;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --transition: 0.2s ease;
+  --sidebar-width: 260px;
+  --list-width: 320px;
+  --toolbar-height: 46px;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #1a1a1f;
+  --bg-secondary: #212128;
+  --bg-sidebar: #1e1e24;
+  --bg-editor: #212128;
+  --bg-hover: #2a2a32;
+  --bg-active: #1a3a5c;
+  --bg-input: #2a2a32;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #777;
+  --text-placeholder: #555;
+  --border-color: #333338;
+  --border-light: #2a2a32;
+  --accent: #6db3f2;
+  --accent-hover: #5a9edb;
+  --accent-light: #1a3a5c;
+  --danger: #f07070;
+  --danger-hover: #d95a5a;
+  --danger-light: #3a1a1a;
+  --tag-bg: #1a3a5c;
+  --tag-text: #6db3f2;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--transition), color var(--transition);
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ============================================================
+   响应式布局 —— 不受 Vue scoped 限制的全局规则
+   ============================================================ */
+
+/* 中等屏幕：侧边栏收缩为仅图标 */
+@media (max-width: 900px) {
+  :root {
+    --sidebar-width: 60px;
+  }
+
+  /* 隐藏侧边栏文字元素 —— 这些 class 来自子组件，必须用全局 CSS */
+  .sidebar {
+    width: 60px !important;
+    min-width: 60px !important;
+  }
+  .sidebar .section-label,
+  .sidebar .notebook-item .name,
+  .sidebar .notebook-item .count,
+  .sidebar .tags-section,
+  .sidebar .theme-toggle {
+    display: none !important;
+  }
+  /* 新建笔记本按钮缩小为仅 + 图标 */
+  .sidebar .add-notebook-btn {
+    margin: 6px 4px !important;
+    padding: 8px 0 !important;
+    font-size: 0 !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+  }
+  .sidebar .add-notebook-btn::before {
+    content: "+";
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+  .sidebar-header {
+    padding: 14px 8px !important;
+    justify-content: center !important;
+  }
+  .sidebar-header .logo span {
+    display: none;
+  }
+  .notebook-list {
+    padding: 0 4px !important;
+  }
+  .notebook-item {
+    justify-content: center !important;
+    padding: 10px 6px !important;
+  }
+
+  /* NoteList 宽度 */
+  :root {
+    --list-width: 240px;
+  }
+  .note-list-panel {
+    width: 240px !important;
+    min-width: 240px !important;
+  }
+
+  /* 编辑器工具栏在小屏时允许增高 */
+  .editor-toolbar {
+    min-height: var(--toolbar-height);
+    height: auto !important;
+  }
+}
+
+/* 小屏幕：笔记列表全宽，编辑器浮动覆盖 */
+@media (max-width: 600px) {
+  .note-list-panel {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+  .editor-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: none;
+  }
+  .editor-panel.show-mobile {
+    display: flex;
+  }
+  .back-btn-mobile {
+    display: flex !important;
+  }
+}

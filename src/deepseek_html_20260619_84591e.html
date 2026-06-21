@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思绪 - 自用笔记应用</title>
+    <style>
+        :root {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-sidebar: #fafafa;
+            --bg-editor: #ffffff;
+            --bg-hover: #f0f0f0;
+            --bg-active: #e3f2fd;
+            --bg-input: #f5f5f5;
+            --text-primary: #1a1a1a;
+            --text-secondary: #555;
+            --text-tertiary: #888;
+            --text-placeholder: #aaa;
+            --border-color: #e0e0e0;
+            --border-light: #eee;
+            --accent: #4a90d9;
+            --accent-hover: #357abd;
+            --accent-light: #e8f0fe;
+            --danger: #e05555;
+            --danger-hover: #c94444;
+            --danger-light: #fde8e8;
+            --tag-bg: #e8f0fe;
+            --tag-text: #4a90d9;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --radius-sm: 6px;
+            --radius: 8px;
+            --radius-lg: 12px;
+            --transition: 0.2s ease;
+            --sidebar-width: 260px;
+            --list-width: 320px;
+            --toolbar-height: 46px;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1f;
+            --bg-secondary: #212128;
+            --bg-sidebar: #1e1e24;
+            --bg-editor: #212128;
+            --bg-hover: #2a2a32;
+            --bg-active: #1a3a5c;
+            --bg-input: #2a2a32;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-tertiary: #777;
+            --text-placeholder: #555;
+            --border-color: #333338;
+            --border-light: #2a2a32;
+            --accent: #6db3f2;
+            --accent-hover: #5a9edb;
+            --accent-light: #1a3a5c;
+            --danger: #f07070;
+            --danger-hover: #d95a5a;
+            --danger-light: #3a1a1a;
+            --tag-bg: #1a3a5c;
+            --tag-text: #6db3f2;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            transition: background var(--transition), color var(--transition);
+        }
+
+        /* ============================================================
+           模块一：左侧边栏 (Sidebar)
+           功能说明：
+           - 显示所有笔记本分类，支持创建/删除/重命名笔记本
+           - 显示所有标签，点击标签可筛选笔记
+           - 统计各笔记本下的笔记数量
+           - 用户信息区 & 主题切换按钮
+           ============================================================ */
+        .sidebar {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            transition: all var(--transition);
+            z-index: 10;
+        }
+        .sidebar-header {
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -0.3px;
+            white-space: nowrap;
+        }
+        .sidebar-header .logo svg {
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+        .theme-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            flex-shrink: 0;
+            color: var(--text-secondary);
+        }
+        .theme-toggle:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        /* 笔记本列表区域 */
+        .notebooks-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-tertiary);
+            padding: 8px 20px 6px;
+            font-weight: 600;
+            user-select: none;
+        }
+        .notebook-list {
+            list-style: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 10px;
+        }
+        .notebook-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            position: relative;
+            user-select: none;
+            margin-bottom: 1px;
+        }
+        .notebook-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .notebook-item.active {
+            background: var(--bg-active);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .notebook-item .icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .notebook-item .name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .notebook-item .count {
+            font-size: 0.75rem;
+            background: var(--bg-input);
+            color: var(--text-tertiary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            min-width: 22px;
+            text-align: center;
+        }
+        .notebook-item .delete-btn {
+            opacity: 0;
+            font-size: 0.8rem;
+            color: var(--danger);
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: all var(--transition);
+            background: none;
+            border: none;
+            line-height: 1;
+        }
+        .notebook-item:hover .delete-btn {
+            opacity: 0.7;
+        }
+        .notebook-item .delete-btn:hover {
+            opacity: 1;
+            background: var(--danger-light);
+        }
+        .add-notebook-btn {
+            margin: 6px 10px;
+            padding: 9px 12px;
+            border-radius: var(--radius);
+            border: 1px dashed var(--border-color);
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+            transition: all var(--transition);
+            text-align: center;
+        }
+        .add-notebook-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+        /* 标签区域 */
+        .tags-section {
+            border-top: 1px solid var(--border-light);
+            padding: 8px 0 12px;
+            flex-shrink: 0;
+            max-height: 180px;
+            display: flex;
+            flex-direction: column;
+        }
+        .tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 4px 16px;
+            overflow-y: auto;
+        }
+        .tag-chip {
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 14px;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+            user-select: none;
+            border: 1px solid transparent;
+        }
+        .tag-chip:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+        .tag-chip.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        /* ============================================================
+           模块二：笔记列表 (Note List)
+           功能说明：
+           - 展示当前笔记本下的所有笔记摘要（标题、内容预览、时间）
+           - 支持搜索过滤笔记
+           - 点击选中笔记进入编辑状态
+           - 新建笔记按钮
+           - 显示笔记的标签
+           ============================================================ */
+        .note-list-panel {
+            width: var(--list-width);
+            min-width: var(--list-width);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            transition: all var(--transition);
+        }
+        .list-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .list-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .list-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .new-note-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .new-note-btn:hover {
+            background: var(--accent-hover);
+            transform: scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+        /* 搜索框 */
+        .search-wrap {
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 9px 12px 9px 34px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            transition: all var(--transition);
+        }
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        .search-input::placeholder {
+            color: var(--text-placeholder);
+        }
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+        /* 笔记条目列表 */
+        .note-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 8px;
+        }
+        .note-item {
+            padding: 12px 14px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all var(--transition);
+            border: 1px solid transparent;
+            margin-bottom: 3px;
+            position: relative;
+        }
+        .note-item:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+        }
+        .note-item.active {
+            background: var(--bg-active);
+            border-color: var(--accent);
+            box-shadow: var(--shadow-sm);
+        }
+        .note-item .note-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .note-item .note-preview {
+            font-size: 0.78rem;
+            color: var(--text-tertiary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 6px;
+        }
+        .note-item .note-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+        }
+        .note-item .note-tags-mini {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .note-item .mini-tag {
+            font-size: 0.65rem;
+            padding: 2px 7px;
+            border-radius: 8px;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            white-space: nowrap;
+        }
+        .empty-notes {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+        }
+        .empty-notes .empty-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* ============================================================
+           模块三：编辑器区域 (Editor)
+           功能说明：
+           - 富文本/纯文本编辑区（基于contenteditable）
+           - 顶部工具栏：加粗、斜体、下划线、无序列表、有序列表
+           - 标签管理：为笔记添加/删除标签
+           - 自动保存到localStorage
+           - 标题可编辑
+           ============================================================ */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--bg-editor);
+            transition: background var(--transition);
+            min-width: 0;
+        }
+        .editor-empty {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+            flex-direction: column;
+            gap: 8px;
+            user-select: none;
+        }
+        .editor-empty .big-icon {
+            font-size: 5rem;
+            opacity: 0.3;
+            margin-bottom: 8px;
+        }
+        .editor-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        /* 工具栏 */
+        .editor-toolbar {
+            height: var(--toolbar-height);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 0 12px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            background: var(--bg-editor);
+        }
+        .tool-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .tool-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .tool-btn:active,
+        .tool-btn.active {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+        .tool-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--border-light);
+            margin: 0 6px;
+        }
+        /* 标签输入区 */
+        .tags-input-area {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .tag-input {
+            width: 100px;
+            padding: 5px 10px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            outline: none;
+            transition: all var(--transition);
+        }
+        .tag-input:focus {
+            border-color: var(--accent);
+            width: 140px;
+        }
+        .tag-add-btn {
+            font-size: 0.7rem;
+            padding: 5px 10px;
+            border-radius: 14px;
+            border: 1px solid var(--accent);
+            background: var(--accent-light);
+            color: var(--accent);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all var(--transition);
+        }
+        .tag-add-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+        .editor-tags-display {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            padding: 0 12px;
+            margin-left: auto;
+            align-items: center;
+        }
+        .editor-tag {
+            font-size: 0.7rem;
+            padding: 3px 9px;
+            border-radius: 12px;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: default;
+            white-space: nowrap;
+        }
+        .editor-tag .remove-tag {
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            transition: opacity var(--transition);
+            line-height: 1;
+        }
+        .editor-tag .remove-tag:hover {
+            opacity: 1;
+            color: var(--danger);
+        }
+        /* 标题输入 */
+        .title-input {
+            width: 100%;
+            border: none;
+            font-size: 1.6rem;
+            font-weight: 700;
+            padding: 16px 24px 8px;
+            background: transparent;
+            color: var(--text-primary);
+            outline: none;
+            letter-spacing: -0.3px;
+        }
+        .title-input::placeholder {
+            color: var(--text-placeholder);
+            font-weight: 400;
+        }
+        /* 内容编辑区 */
+        .content-editable {
+            flex: 1;
+            border: none;
+            padding: 8px 24px 40px;
+            font-size: 0.95rem;
+            line-height: 1.75;
+            outline: none;
+            overflow-y: auto;
+            background: transparent;
+            color: var(--text-primary);
+            resize: none;
+            font-family: inherit;
+            min-height: 200px;
+        }
+        .content-editable:empty::before {
+            content: '开始写下你的想法...';
+            color: var(--text-placeholder);
+            pointer-events: none;
+        }
+        .content-editable:focus {
+            outline: none;
+        }
+        /* 底部状态栏 */
+        .editor-statusbar {
+            height: 28px;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            gap: 12px;
+            flex-shrink: 0;
+            background: var(--bg-editor);
+        }
+        .save-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .save-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Toast提示 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            z-index: 999;
+            pointer-events: none;
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: var(--shadow-lg);
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 对话框 */
+        .dialog-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .dialog-box {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            width: 380px;
+            max-width: 90vw;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+        }
+        .dialog-box h3 {
+            margin-bottom: 14px;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+        .dialog-box input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            margin-bottom: 16px;
+        }
+        .dialog-box input:focus {
+            border-color: var(--accent);
+        }
+        .dialog-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .dialog-buttons button {
+            padding: 8px 18px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all var(--transition);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        .dialog-buttons .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .dialog-buttons .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+        .dialog-buttons .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+        .dialog-buttons .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 60px;
+                min-width: 60px;
+            }
+            .sidebar .section-label,
+            .sidebar .notebook-item .name,
+            .sidebar .notebook-item .count,
+            .sidebar .add-notebook-btn,
+            .sidebar .tags-section {
+                display: none;
+            }
+            .sidebar-header {
+                padding: 14px 8px;
+                justify-content: center;
+            }
+            .sidebar-header .logo span {
+                display: none;
+            }
+            .notebook-list {
+                padding: 0 4px;
+            }
+            .notebook-item {
+                justify-content: center;
+                padding: 10px 6px;
+            }
+            .note-list-panel {
+                width: 240px;
+                min-width: 240px;
+            }
+        }
+        @media (max-width: 600px) {
+            .note-list-panel {
+                width: 100%;
+                min-width: 100%;
+            }
+            .editor-panel {
+                position: fixed;
+                inset: 0;
+                z-index: 20;
+                display: none;
+            }
+            .editor-panel.show-mobile {
+                display: flex;
+            }
+            .back-btn-mobile {
+                display: flex !important;
+            }
+        }
+        .back-btn-mobile {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85rem;
+            color: var(--accent);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    整体布局：三栏式结构
+    [侧边栏] | [笔记列表] | [编辑器]
+    数据存储：localStorage
+    数据结构：
+    {
+    notebooks: [{ id, name, createdAt }],
+    notes: [{ id, notebookId, title, content(HTML), tags:[], createdAt, updatedAt }]
+    }
+    ============================================================ -->
+
+    <!-- ==================== 模块一：侧边栏 ==================== -->
+    <aside class="sidebar" id="sidebar">
+        <!-- 顶部：Logo + 主题切换 -->
+        <div class="sidebar-header">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="3"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>
+                </svg>
+                <span>思绪</span>
+            </div>
+            <button class="theme-toggle" id="themeToggle" title="切换主题">🌓</button>
+        </div>
+
+        <!-- 笔记本分类列表 -->
+        <div class="notebooks-section">
+            <span class="section-label">📚 笔记本</span>
+            <ul class="notebook-list" id="notebookList"></ul>
+            <button class="add-notebook-btn" id="addNotebookBtn">+ 新建笔记本</button>
+        </div>
+
+        <!-- 标签汇总区 -->
+        <div class="tags-section" id="tagsSection">
+            <span class="section-label">🏷️ 标签</span>
+            <div class="tags-list" id="tagsList"></div>
+        </div>
+    </aside>
+
+    <!-- ==================== 模块二：笔记列表 ==================== -->
+    <div class="note-list-panel" id="noteListPanel">
+        <div class="list-header">
+            <div class="list-header-top">
+                <button class="back-btn-mobile" id="backBtnMobile">← 返回</button>
+                <span class="list-title" id="listTitle">全部笔记</span>
+                <button class="new-note-btn" id="newNoteBtn" title="新建笔记">+</button>
+            </div>
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="搜索笔记...">
+            </div>
+        </div>
+        <div class="note-items" id="noteItems"></div>
+    </div>
+
+    <!-- ==================== 模块三：编辑器 ==================== -->
+    <div class="editor-panel" id="editorPanel">
+        <!-- 空状态：未选中笔记时显示 -->
+        <div class="editor-empty" id="editorEmpty">
+            <span class="big-icon">📝</span>
+            <span>选择一篇笔记开始编辑</span>
+            <span style="font-size:0.75rem;">或点击 + 创建新笔记</span>
+        </div>
+        <!-- 编辑状态 -->
+        <div class="editor-content" id="editorContent" style="display:none;">
+            <!-- 工具栏 -->
+            <div class="editor-toolbar" id="editorToolbar">
+                <button class="tool-btn" data-cmd="bold" title="加粗 (Ctrl+B)"><b>B</b></button>
+                <button class="tool-btn" data-cmd="italic" title="斜体 (Ctrl+I)"><i>I</i></button>
+                <button class="tool-btn" data-cmd="underline" title="下划线 (Ctrl+U)"><u>U</u></button>
+                <span class="tool-divider"></span>
+                <button class="tool-btn" data-cmd="insertUnorderedList" title="无序列表">•≡</button>
+                <button class="tool-btn" data-cmd="insertOrderedList" title="有序列表">1.</button>
+                <span class="tool-divider"></span>
+                <!-- 标签管理 -->
+                <div class="editor-tags-display" id="editorTagsDisplay"></div>
+                <div class="tags-input-area">
+                    <input type="text" class="tag-input" id="tagInput" placeholder="添加标签...">
+                    <button class="tag-add-btn" id="tagAddBtn">+标签</button>
+                </div>
+            </div>
+            <!-- 标题 -->
+            <input type="text" class="title-input" id="titleInput" placeholder="笔记标题...">
+            <!-- 富文本编辑区 -->
+            <div class="content-editable" id="contentEditable" contenteditable="true"></div>
+            <!-- 状态栏 -->
+            <div class="editor-statusbar">
+                <span class="save-indicator"><span class="save-dot"></span> 自动保存已启用</span>
+                <span id="wordCount">0 字</span>
+                <span id="lastSaved" style="margin-left:auto;">—</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 对话框容器 -->
+    <div id="dialogContainer"></div>
+
+    <script>
+        (function() {
+            // ============================================================
+            // 数据管理模块 - 负责localStorage的读写
+            // ============================================================
+            const STORAGE_KEY = 'siyi_notes_app_data';
+
+            function loadData() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (raw) {
+                        const data = JSON.parse(raw);
+                        return {
+                            notebooks: data.notebooks || [],
+                            notes: data.notes || [],
+                        };
+                    }
+                } catch (e) {
+                    console.warn('数据读取失败，使用默认数据', e);
+                }
+                // 默认初始化数据
+                return {
+                    notebooks: [
+                        { id: 'nb1', name: '个人日记', createdAt: Date.now() - 86400000 * 7 },
+                        { id: 'nb2', name: '工作笔记', createdAt: Date.now() - 86400000 * 3 },
+                        { id: 'nb3', name: '学习摘录', createdAt: Date.now() - 86400000 },
+                    ],
+                    notes: [
+                        { id: 'n1', notebookId: 'nb1', title: '今日随想',
+                            content: '<p>今天天气真好，适合出去走走。记录一下心情。</p>',
+                            tags: ['生活', '心情'], createdAt: Date.now() - 3600000 * 5, updatedAt: Date.now() -
+                                3600000 * 2 },
+                        { id: 'n2', notebookId: 'nb2', title: '项目会议纪要',
+                            content: '<p><b>参会人员：</b>全员</p><p><b>议题：</b>Q4规划</p><ul><li>确定里程碑</li><li>分配任务</li></ul>',
+                            tags: ['会议', '项目'], createdAt: Date.now() - 86400000, updatedAt: Date.now() -
+                                3600000 },
+                        { id: 'n3', notebookId: 'nb3', title: 'JavaScript笔记',
+                            content: '<p>闭包是指函数能够访问其外部作用域中变量的能力。</p><p><i>关键点：</i>即使外部函数已返回，闭包仍保留对变量的引用。</p>',
+                            tags: ['编程', 'JS'], createdAt: Date.now() - 86400000 * 2, updatedAt: Date.now() -
+                                86400000 },
+                    ],
+                };
+            }
+
+            function saveData(data) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                } catch (e) {
+                    showToast('⚠️ 存储空间不足，请清理旧笔记');
+                }
+            }
+
+            let appData = loadData();
+            // 启动时持久化默认数据
+            saveData(appData);
+
+            // ============================================================
+            // 全局状态
+            // ============================================================
+            let activeNotebookId = null; // 当前选中的笔记本ID，null表示"全部笔记"
+            let activeNoteId = null; // 当前编辑的笔记ID
+            let activeTagFilter = null; // 当前标签筛选
+            let searchQuery = ''; // 搜索关键词
+            let saveTimeout = null; // 自动保存防抖计时器
+
+            // ============================================================
+            // DOM引用缓存
+            // ============================================================
+            const $ = (sel) => document.querySelector(sel);
+            const $$ = (sel) => document.querySelectorAll(sel);
+
+            const domNotebookList = $('#notebookList');
+            const domNoteItems = $('#noteItems');
+            const domTagsList = $('#tagsList');
+            const domListTitle = $('#listTitle');
+            const domSearchInput = $('#searchInput');
+            const domEditorEmpty = $('#editorEmpty');
+            const domEditorContent = $('#editorContent');
+            const domTitleInput = $('#titleInput');
+            const domContentEditable = $('#contentEditable');
+            const domEditorTagsDisplay = $('#editorTagsDisplay');
+            const domTagInput = $('#tagInput');
+            const domWordCount = $('#wordCount');
+            const domLastSaved = $('#lastSaved');
+            const domToast = $('#toast');
+            const domDialogContainer = $('#dialogContainer');
+            const domEditorPanel = $('#editorPanel');
+            const domThemeToggle = $('#themeToggle');
+
+            // ============================================================
+            // 工具函数
+            // ============================================================
+            function generateId() {
+                return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+            }
+
+            function formatTime(ts) {
+                const d = new Date(ts);
+                const now = new Date();
+                const diff = now - d;
+                if (diff < 60000) return '刚刚';
+                if (diff < 3600000) return Math.floor(diff / 60000) + ' 分钟前';
+                if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前';
+                const month = d.getMonth() + 1;
+                const day = d.getDate();
+                const hour = d.getHours().toString().padStart(2, '0');
+                const min = d.getMinutes().toString().padStart(2, '0');
+                return `${month}/${day} ${hour}:${min}`;
+            }
+
+            function stripHtml(html) {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = html;
+                return tmp.textContent || tmp.innerText || '';
+            }
+
+            function countWords(text) {
+                return text.replace(/\s+/g, '').length;
+            }
+
+            function showToast(msg, duration = 2000) {
+                domToast.textContent = msg;
+                domToast.classList.add('show');
+                clearTimeout(domToast._timeout);
+                domToast._timeout = setTimeout(() => {
+                    domToast.classList.remove('show');
+                }, duration);
+            }
+
+            // ============================================================
+            // 对话框模块 - 用于创建笔记本、重命名、确认删除等
+            // ============================================================
+            function showDialog(title, defaultValue = '', confirmText = '确定', onConfirm) {
+                const overlay = document.createElement('div');
+                overlay.className = 'dialog-overlay';
+                overlay.innerHTML = `
+                <div class="dialog-box">
+                <h3>${title}</h3>
+                <input type="text" id="dialogInput" value="${defaultValue.replace(/"/g,'&quot;')}" placeholder="输入名称...">
+                <div class="dialog-buttons">
+                <button class="btn-cancel">取消</button>
+                <button class="btn-primary">${confirmText}</button>
+                </div>
+                </div>
+                `;
+                domDialogContainer.appendChild(overlay);
+
+                const input = overlay.querySelector('#dialogInput');
+                const btnCancel = overlay.querySelector('.btn-cancel');
+                const btnConfirm = overlay.querySelector('.btn-primary');
+
+                input.focus();
+                input.select();
+
+                const close = () => {
+                    overlay.remove();
+                };
+
+                btnCancel.addEventListener('click', close);
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) close();
+                });
+                btnConfirm.addEventListener('click', () => {
+                    const val = input.value.trim();
+                    if (val) {
+                        onConfirm(val);
+                        close();
+                    } else {
+                        input.focus();
+                        input.style.borderColor = 'var(--danger)';
+                        setTimeout(() => input.style.borderColor = '', 800);
+                    }
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') btnConfirm.click();
+                    if (e.key === 'Escape') close();
+                });
+            }
+
+            function showConfirmDialog(title, message, onConfirm) {
+                const overlay = document.createElement('div');
+                overlay.className = 'dialog-overlay';
+                overlay.innerHTML = `
+                <div class="dialog-box">
+                <h3>${title}</h3>
+                <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:16px;">${message}</p>
+                <div class="dialog-buttons">
+                <button class="btn-cancel">取消</button>
+                <button class="btn-danger">确认删除</button>
+                </div>
+                </div>
+                `;
+                domDialogContainer.appendChild(overlay);
+                const btnCancel = overlay.querySelector('.btn-cancel');
+                const btnConfirm = overlay.querySelector('.btn-danger');
+                const close = () => overlay.remove();
+                btnCancel.addEventListener('click', close);
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+                btnConfirm.addEventListener('click', () => { onConfirm();
+                    close(); });
+            }
+
+            // ============================================================
+            // 渲染函数 - 将数据渲染到DOM
+            // ============================================================
+
+            /** 渲染侧边栏笔记本列表 */
+            function renderNotebooks() {
+                const notebooks = appData.notebooks;
+                domNotebookList.innerHTML = '';
+
+                // "全部笔记" 虚拟笔记本
+                const allItem = document.createElement('li');
+                allItem.className = 'notebook-item' + (activeNotebookId === null && !activeTagFilter ? ' active' :
+                    '');
+                allItem.innerHTML = `
+                <span class="icon">📋</span>
+                <span class="name">全部笔记</span>
+                <span class="count">${appData.notes.length}</span>
+                `;
+                allItem.addEventListener('click', () => {
+                    activeNotebookId = null;
+                    activeTagFilter = null;
+                    updateAllViews();
+                });
+                domNotebookList.appendChild(allItem);
+
+                // 各笔记本
+                notebooks.forEach(nb => {
+                    const count = appData.notes.filter(n => n.notebookId === nb.id).length;
+                    const li = document.createElement('li');
+                    li.className = 'notebook-item' + (activeNotebookId === nb.id && !activeTagFilter ?
+                        ' active' : '');
+                    li.innerHTML = `
+                    <span class="icon">📓</span>
+                    <span class="name">${escapeHtml(nb.name)}</span>
+                    <span class="count">${count}</span>
+                    <button class="delete-btn" title="删除笔记本">×</button>
+                    `;
+                    // 点击选中笔记本
+                    li.addEventListener('click', (e) => {
+                        if (e.target.closest('.delete-btn')) return;
+                        activeNotebookId = nb.id;
+                        activeTagFilter = null;
+                        updateAllViews();
+                    });
+                    // 删除笔记本
+                    li.querySelector('.delete-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const noteCount = appData.notes.filter(n => n.notebookId === nb.id).length;
+                        const msg = noteCount > 0 ?
+                            `该笔记本下有 ${noteCount} 篇笔记，删除后笔记将移至"未分类"。` :
+                            '确定删除此笔记本？';
+                        showConfirmDialog('删除笔记本', msg, () => {
+                            // 将该笔记本下的笔记移到第一个可用笔记本或null
+                            const fallbackId = appData.notebooks.find(n => n.id !== nb
+                                .id)?.id || null;
+                            appData.notes.forEach(n => {
+                                if (n.notebookId === nb.id) n.notebookId =
+                                    fallbackId;
+                            });
+                            appData.notebooks = appData.notebooks.filter(n => n.id !== nb
+                                .id);
+                            if (activeNotebookId === nb.id) activeNotebookId = fallbackId;
+                            if (activeNoteId && appData.notes.find(n => n.id === activeNoteId)
+                                ?.notebookId !== activeNotebookId && activeNotebookId) {
+                                activeNoteId = null;
+                            }
+                            saveData(appData);
+                            updateAllViews();
+                            showToast('笔记本已删除');
+                        });
+                    });
+                    // 双击重命名
+                    li.addEventListener('dblclick', (e) => {
+                        if (e.target.closest('.delete-btn')) return;
+                        showDialog('重命名笔记本', nb.name, '保存', (newName) => {
+                            nb.name = newName;
+                            saveData(appData);
+                            updateAllViews();
+                            showToast('已重命名');
+                        });
+                    });
+                    domNotebookList.appendChild(li);
+                });
+            }
+
+            /** 渲染标签汇总 */
+            function renderTags() {
+                const allTags = new Set();
+                appData.notes.forEach(n => n.tags.forEach(t => allTags.add(t)));
+                const tagsArr = [...allTags].sort();
+                domTagsList.innerHTML = '';
+                if (tagsArr.length === 0) {
+                    domTagsList.innerHTML =
+                        '<span style="font-size:0.75rem;color:var(--text-tertiary);padding:4px;">暂无标签</span>';
+                    return;
+                }
+                tagsArr.forEach(tag => {
+                    const chip = document.createElement('span');
+                    chip.className = 'tag-chip' + (activeTagFilter === tag ? ' active' : '');
+                    chip.textContent = tag;
+                    chip.addEventListener('click', () => {
+                        if (activeTagFilter === tag) {
+                            activeTagFilter = null;
+                        } else {
+                            activeTagFilter = tag;
+                            activeNotebookId = null;
+                        }
+                        updateAllViews();
+                    });
+                    domTagsList.appendChild(chip);
+                });
+            }
+
+            /** 渲染笔记列表 */
+            function renderNoteList() {
+                let filteredNotes = [...appData.notes];
+
+                // 按笔记本筛选
+                if (activeNotebookId !== null) {
+                    filteredNotes = filteredNotes.filter(n => n.notebookId === activeNotebookId);
+                }
+                // 按标签筛选
+                if (activeTagFilter) {
+                    filteredNotes = filteredNotes.filter(n => n.tags.includes(activeTagFilter));
+                }
+                // 按搜索关键词筛选
+                if (searchQuery.trim()) {
+                    const q = searchQuery.trim().toLowerCase();
+                    filteredNotes = filteredNotes.filter(n =>
+                        n.title.toLowerCase().includes(q) ||
+                        stripHtml(n.content).toLowerCase().includes(q) ||
+                        n.tags.some(t => t.toLowerCase().includes(q))
+                    );
+                }
+                // 按更新时间倒序
+                filteredNotes.sort((a, b) => b.updatedAt - a.updatedAt);
+
+                // 更新列表标题
+                if (activeTagFilter) {
+                    domListTitle.textContent = `🏷️ ${activeTagFilter}`;
+                } else if (activeNotebookId) {
+                    const nb = appData.notebooks.find(n => n.id === activeNotebookId);
+                    domListTitle.textContent = nb ? nb.name : '笔记';
+                } else {
+                    domListTitle.textContent = '全部笔记';
+                }
+
+                // 渲染
+                domNoteItems.innerHTML = '';
+                if (filteredNotes.length === 0) {
+                    domNoteItems.innerHTML = `
+                    <div class="empty-notes">
+                    <span class="empty-icon">📭</span>
+                    <span>${searchQuery ? '没有匹配的笔记' : '这里还没有笔记'}</span>
+                    <span style="font-size:0.7rem;">点击右上角 + 创建</span>
+                    </div>`;
+                }
+                filteredNotes.forEach(note => {
+                    const div = document.createElement('div');
+                    div.className = 'note-item' + (activeNoteId === note.id ? ' active' : '');
+                    const preview = stripHtml(note.content).slice(0, 60) || '(空内容)';
+                    const tagsHtml = note.tags.map(t =>
+                        `<span class="mini-tag">${escapeHtml(t)}</span>`).join('');
+                    div.innerHTML = `
+                    <div class="note-title">${escapeHtml(note.title) || '无标题'}</div>
+                    <div class="note-preview">${escapeHtml(preview)}</div>
+                    <div class="note-meta">
+                    <span>${formatTime(note.updatedAt)}</span>
+                    <div class="note-tags-mini">${tagsHtml}</div>
+                    </div>
+                    `;
+                    div.addEventListener('click', () => {
+                        selectNote(note.id);
+                    });
+                    domNoteItems.appendChild(div);
+                });
+            }
+
+            /** 渲染编辑器 */
+            function renderEditor() {
+                const note = appData.notes.find(n => n.id === activeNoteId);
+                if (!note) {
+                    domEditorEmpty.style.display = 'flex';
+                    domEditorContent.style.display = 'none';
+                    domWordCount.textContent = '0 字';
+                    domLastSaved.textContent = '—';
+                    return;
+                }
+                domEditorEmpty.style.display = 'none';
+                domEditorContent.style.display = 'flex';
+                domTitleInput.value = note.title;
+                domContentEditable.innerHTML = note.content;
+                domWordCount.textContent = countWords(stripHtml(note.content)) + ' 字';
+                domLastSaved.textContent = '已保存 ' + formatTime(note.updatedAt);
+
+                // 渲染编辑器内标签
+                renderEditorTags(note);
+            }
+
+            function renderEditorTags(note) {
+                domEditorTagsDisplay.innerHTML = '';
+                note.tags.forEach(tag => {
+                    const span = document.createElement('span');
+                    span.className = 'editor-tag';
+                    span.innerHTML = `${escapeHtml(tag)} <span class="remove-tag" data-tag="${escapeHtml(tag)}">×</span>`;
+                    span.querySelector('.remove-tag').addEventListener('click', () => {
+                        note.tags = note.tags.filter(t => t !== tag);
+                        saveData(appData);
+                        updateAllViews();
+                        showToast('标签已移除');
+                    });
+                    domEditorTagsDisplay.appendChild(span);
+                });
+            }
+
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            // ============================================================
+            // 核心操作函数
+            // ============================================================
+            function selectNote(noteId) {
+                // 保存当前编辑内容
+                saveCurrentNote();
+                activeNoteId = noteId;
+                updateAllViews();
+                // 移动端显示编辑器
+                domEditorPanel.classList.add('show-mobile');
+            }
+
+            function createNewNote() {
+                saveCurrentNote();
+                const notebookId = activeNotebookId || (appData.notebooks[0]?.id || null);
+                const note = {
+                    id: generateId(),
+                    notebookId: notebookId,
+                    title: '',
+                    content: '',
+                    tags: [],
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                };
+                appData.notes.unshift(note);
+                activeNoteId = note.id;
+                if (notebookId && activeNotebookId !== notebookId) {
+                    activeNotebookId = notebookId;
+                    activeTagFilter = null;
+                }
+                saveData(appData);
+                updateAllViews();
+                domTitleInput.focus();
+                showToast('新笔记已创建');
+            }
+
+            function saveCurrentNote() {
+                if (!activeNoteId) return;
+                const note = appData.notes.find(n => n.id === activeNoteId);
+                if (!note) return;
+                const title = domTitleInput.value.trim();
+                const content = domContentEditable.innerHTML;
+                if (note.title === title && note.content === content) return; // 无变化
+                note.title = title;
+                note.content = content;
+                note.updatedAt = Date.now();
+                saveData(appData);
+                // 更新字数
+                domWordCount.textContent = countWords(stripHtml(content)) + ' 字';
+                domLastSaved.textContent = '已保存 ' + formatTime(Date.now());
+            }
+
+            function autoSave() {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    saveCurrentNote();
+                    // 静默保存，刷新列表预览
+                    renderNoteList();
+                    renderTags();
+                    renderNotebooks();
+                }, 800);
+            }
+
+            function deleteCurrentNote() {
+                if (!activeNoteId) return;
+                const note = appData.notes.find(n => n.id === activeNoteId);
+                if (!note) return;
+                showConfirmDialog('删除笔记', `确定删除"${note.title || '无标题'}"？此操作不可恢复。`, () => {
+                    appData.notes = appData.notes.filter(n => n.id !== activeNoteId);
+                    activeNoteId = null;
+                    saveData(appData);
+                    updateAllViews();
+                    showToast('笔记已删除');
+                });
+            }
+
+            function addTagToCurrentNote() {
+                if (!activeNoteId) return;
+                const tagVal = domTagInput.value.trim();
+                if (!tagVal) return;
+                const note = appData.notes.find(n => n.id === activeNoteId);
+                if (!note) return;
+                if (note.tags.includes(tagVal)) {
+                    showToast('标签已存在');
+                    return;
+                }
+                note.tags.push(tagVal);
+                note.updatedAt = Date.now();
+                domTagInput.value = '';
+                saveData(appData);
+                updateAllViews();
+                showToast(`标签"${tagVal}"已添加`);
+            }
+
+            function updateAllViews() {
+                renderNotebooks();
+                renderTags();
+                renderNoteList();
+                renderEditor();
+            }
+
+            // ============================================================
+            // 主题切换模块
+            // ============================================================
+            function initTheme() {
+                const saved = localStorage.getItem('siyi_theme');
+                if (saved === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    domThemeToggle.textContent = '☀️';
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    domThemeToggle.textContent = '🌙';
+                }
+            }
+
+            function toggleTheme() {
+                const isDark = document.documentElement.hasAttribute('data-theme');
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('siyi_theme', 'light');
+                    domThemeToggle.textContent = '🌙';
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('siyi_theme', 'dark');
+                    domThemeToggle.textContent = '☀️';
+                }
+            }
+
+            // ============================================================
+            // 事件绑定
+            // ============================================================
+            document.getElementById('addNotebookBtn').addEventListener('click', () => {
+                showDialog('新建笔记本', '', '创建', (name) => {
+                    const nb = {
+                        id: generateId(),
+                        name: name,
+                        createdAt: Date.now(),
+                    };
+                    appData.notebooks.push(nb);
+                    activeNotebookId = nb.id;
+                    activeTagFilter = null;
+                    saveData(appData);
+                    updateAllViews();
+                    showToast('笔记本已创建');
+                });
+            });
+
+            document.getElementById('newNoteBtn').addEventListener('click', createNewNote);
+
+            domSearchInput.addEventListener('input', () => {
+                searchQuery = domSearchInput.value;
+                renderNoteList();
+            });
+
+            domTitleInput.addEventListener('input', autoSave);
+            domContentEditable.addEventListener('input', autoSave);
+
+            // 工具栏按钮
+            document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const cmd = btn.dataset.cmd;
+                    document.execCommand(cmd, false, null);
+                    domContentEditable.focus();
+                    autoSave();
+                    // 切换active状态
+                    btn.classList.toggle('active');
+                });
+            });
+
+            // 标签添加
+            document.getElementById('tagAddBtn').addEventListener('click', addTagToCurrentNote);
+            domTagInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') addTagToCurrentNote();
+            });
+
+            // 主题切换
+            domThemeToggle.addEventListener('click', toggleTheme);
+
+            // 键盘快捷键
+            document.addEventListener('keydown', (e) => {
+                // Ctrl+S 手动保存
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    saveCurrentNote();
+                    renderNoteList();
+                    renderTags();
+                    renderNotebooks();
+                    showToast('✅ 已保存');
+                }
+                // Ctrl+N 新建笔记
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                    e.preventDefault();
+                    createNewNote();
+                }
+                // Delete键删除笔记（需在列表区聚焦）
+                if (e.key === 'Delete' && activeNoteId && document.activeElement === domContentEditable) {
+                    // 不在编辑器内响应，需要特殊处理
+                }
+                // Esc 关闭移动端编辑器
+                if (e.key === 'Escape' && window.innerWidth <= 600) {
+                    domEditorPanel.classList.remove('show-mobile');
+                }
+            });
+
+            // 移动端返回按钮
+            document.getElementById('backBtnMobile').addEventListener('click', () => {
+                domEditorPanel.classList.remove('show-mobile');
+            });
+
+            // 窗口大小变化时处理
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 600) {
+                    domEditorPanel.classList.remove('show-mobile');
+                }
+            });
+
+            // 页面关闭前保存
+            window.addEventListener('beforeunload', () => {
+                saveCurrentNote();
+            });
+
+            // 定期自动保存（每30秒强制保存一次）
+            setInterval(() => {
+                saveCurrentNote();
+                if (activeNoteId) {
+                    renderNoteList();
+                    renderTags();
+                }
+            }, 30000);
+
+            // ============================================================
+            // 初始化
+            // ============================================================
+            function init() {
+                initTheme();
+                // 默认选中"全部笔记"
+                activeNotebookId = null;
+                activeNoteId = null;
+                updateAllViews();
+                // 如果没有任何笔记，自动创建一篇引导笔记
+                if (appData.notes.length === 0 && appData.notebooks.length === 0) {
+                    const nb = { id: generateId(), name: '我的笔记本', createdAt: Date.now() };
+                    appData.notebooks.push(nb);
+                    const note = {
+                        id: generateId(),
+                        notebookId: nb.id,
+                        title: '欢迎使用思绪笔记',
+                        content: '<p>这是一篇引导笔记。🎉</p><p>你可以：</p><ul><li>在左侧创建< b > 笔记本 </b>来分类管理</li><li>使用<b>标签</b>进行灵活筛选</li><li>点击 + 创建新笔记</li><li>所有数据自动保存在浏览器中</li></ul><p>开始记录你的想法吧！</p>',
+                        tags: ['入门'],
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                    };
+                    appData.notes.push(note);
+                    activeNoteId = note.id;
+                    activeNotebookId = nb.id;
+                    saveData(appData);
+                    updateAllViews();
+                }
+                console.log('📝 思绪笔记应用已就绪');
+                console.log('  - 数据存储于 localStorage');
+                console.log('  - Ctrl+S 手动保存');
+                console.log('  - Ctrl+N 新建笔记');
+                console.log('  - 双击笔记本名称可重命名');
+                console.log('  - 支持标签筛选和搜索');
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>
