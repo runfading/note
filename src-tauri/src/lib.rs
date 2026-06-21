@@ -7,17 +7,11 @@ mod notebooks;
 mod notes;
 mod tags;
 
-use crate::common::{AppState, HandlerRegistrar};
+use crate::common::AppState;
 use crate::config::{init_config, LogConfig, SETTINGS};
 use crate::db::init_db;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
@@ -26,16 +20,31 @@ pub async fn run() {
     let _guard = init_logging(&setting.log);
     let pool = init_db(&setting.database).await.expect("数据库连接失败");
 
-    let mut builder = tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .manage(AppState { db: pool })
-        .plugin(tauri_plugin_opener::init());
-
-    for registrar in inventory::iter::<HandlerRegistrar> {
-        builder = builder.plugin((registrar.handler_fn)());
-    }
-
-    builder
-        .invoke_handler(tauri::generate_handler![greet])
+        .plugin(tauri_plugin_opener::init())
+        .invoke_handler(tauri::generate_handler![
+            tags::handler::search_tags,
+            tags::handler::create_tag,
+            tags::handler::recent_tags,
+            tags::handler::page_notes_by_tag,
+            tags::handler::delete_tag,
+            // notes
+            notes::handler::page_notes,
+            notes::handler::update_note,
+            notes::handler::note_detail,
+            notes::handler::search_notes,
+            notes::handler::create_note,
+            notes::handler::remove_note,
+            // notebooks
+            notebooks::handler::page_notebooks,
+            notebooks::handler::create_notebook,
+            notebooks::handler::remove_notebook,
+            // note_tags
+            note_tags::handler::query_tag_used_times,
+            note_tags::handler::add_note_tag,
+            note_tags::handler::delete_note_tag,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
