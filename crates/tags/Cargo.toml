@@ -1,0 +1,10 @@
+[package]
+name = "tags"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tauri = { workspace = true }
+sea-orm = { workspace = true }
+
+common = { workspace = true }

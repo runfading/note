@@ -9,12 +9,12 @@ import type { TagInfo, CreateTag, SearchTagsQuery, PageNotesByTagQuery } from '@
 
 /** 最近标签 */
 export function recentTags(): Promise<TagInfo[]> {
-  return request<TagInfo[]>('recent_tags')
+  return request<TagInfo[]>('plugin:tags|recent_tags')
 }
 
 /** 创建标签 */
 export function createTag(data: CreateTag): Promise<number> {
-  return request<number>('create_tag', {
+  return request<number>('plugin:tags|create_tag', {
     create: {
       name: data.name,
     },
@@ -23,7 +23,7 @@ export function createTag(data: CreateTag): Promise<number> {
 
 /** 搜索标签 */
 export function searchTags(query: SearchTagsQuery): Promise<TagInfo[]> {
-  return request<TagInfo[]>('search_tags', {
+  return request<TagInfo[]>('plugin:tags|search_tags', {
     query: {
       keyword: query.keyword,
     },
@@ -32,7 +32,7 @@ export function searchTags(query: SearchTagsQuery): Promise<TagInfo[]> {
 
 /** 按标签分页查询笔记 */
 export function pageNotesByTag(tagId: number, query: PageNotesByTagQuery): Promise<ApiPageData<NoteInfo>> {
-  return request<ApiPageData<NoteInfo>>('page_notes_by_tag', {
+  return request<ApiPageData<NoteInfo>>('plugin:tags|page_notes_by_tag', {
     id: tagId,
     query: {
       page_num: query.page_num ?? 1,
@@ -43,5 +43,5 @@ export function pageNotesByTag(tagId: number, query: PageNotesByTagQuery): Promi
 
 /** 删除标签 */
 export function deleteTag(name: string): Promise<null> {
-  return request<null>('delete_tag', { name })
+  return request<null>('plugin:tags|delete_tag', { name })
 }

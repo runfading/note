@@ -8,7 +8,7 @@ import type { NoteInfo, CreateNote, UpdateNote, PageNotesQuery, SearchNotesQuery
 
 /** 分页查询笔记 */
 export function pageNotes(query: PageNotesQuery): Promise<ApiPageData<NoteInfo>> {
-  return request<ApiPageData<NoteInfo>>('page_notes', {
+  return request<ApiPageData<NoteInfo>>('plugin:notes|page_notes', {
     query: {
       page_num: query.page_num ?? 1,
       page_size: query.page_size ?? 10,
@@ -19,7 +19,7 @@ export function pageNotes(query: PageNotesQuery): Promise<ApiPageData<NoteInfo>>
 
 /** 搜索笔记 */
 export function searchNotes(query: SearchNotesQuery): Promise<ApiPageData<NoteInfo>> {
-  return request<ApiPageData<NoteInfo>>('search_notes', {
+  return request<ApiPageData<NoteInfo>>('plugin:notes|search_notes', {
     query: {
       keyword: query.keyword,
       page_num: query.page_num ?? 1,
@@ -30,7 +30,7 @@ export function searchNotes(query: SearchNotesQuery): Promise<ApiPageData<NoteIn
 
 /** 创建笔记 */
 export function createNote(data: CreateNote): Promise<number> {
-  return request<number>('create_note', {
+  return request<number>('plugin:notes|create_note', {
     create: {
       notebook_id: data.notebook_id,
       title: data.title,
@@ -41,12 +41,12 @@ export function createNote(data: CreateNote): Promise<number> {
 
 /** 删除笔记 */
 export function removeNote(id: number): Promise<null> {
-  return request<null>('remove_note', { id })
+  return request<null>('plugin:notes|remove_note', { id })
 }
 
 /** 更新笔记 */
 export function updateNote(data: UpdateNote): Promise<null> {
-  return request<null>('update_note', {
+  return request<null>('plugin:notes|update_note', {
     update: {
       note_id: data.note_id,
       notebook_id: data.notebook_id ?? null,
@@ -58,5 +58,5 @@ export function updateNote(data: UpdateNote): Promise<null> {
 
 /** 笔记详情 */
 export function noteDetail(id: number): Promise<NoteInfo | null> {
-  return request<NoteInfo | null>('note_detail', { id })
+  return request<NoteInfo | null>('plugin:notes|note_detail', { id })
 }

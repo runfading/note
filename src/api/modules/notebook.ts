@@ -9,7 +9,7 @@ import type { ApiPageQuery } from '@/types/api'
 
 /** 分页查询笔记本 */
 export function pageNotebooks(query: ApiPageQuery): Promise<ApiPageData<NotebookInfo>> {
-  return request<ApiPageData<NotebookInfo>>('page_notebooks', {
+  return request<ApiPageData<NotebookInfo>>('plugin:notebooks|page_notebooks', {
     query: {
       page_num: query.page_num,
       page_size: query.page_size,
@@ -19,7 +19,7 @@ export function pageNotebooks(query: ApiPageQuery): Promise<ApiPageData<Notebook
 
 /** 创建笔记本 */
 export function createNotebook(data: CreateNotebook): Promise<number> {
-  return request<number>('create_notebook', {
+  return request<number>('plugin:notebooks|create_notebook', {
     create: {
       name: data.name,
     },
@@ -28,5 +28,5 @@ export function createNotebook(data: CreateNotebook): Promise<number> {
 
 /** 删除笔记本 */
 export function removeNotebook(id: number): Promise<null> {
-  return request<null>('remove_notebook', { id })
+  return request<null>('plugin:notebooks|remove_notebook', { id })
 }
