@@ -6,5 +6,9 @@ edition = "2024"
 
 [dependencies]
 common = { path = "../common" }
-sea-orm = { workspace = true, features = ["sqlx-postgres", "runtime-tokio"] }
+sea-orm = { workspace = true, features = ["sqlx-sqlite", "runtime-tokio"] }
+sea-orm-migration = { workspace = true }
 tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
