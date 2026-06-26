@@ -9,5 +9,4 @@ sea-orm = { workspace = true }
 time = { workspace = true }
 
 common = { workspace = true }
-db = { workspace = true }
 tags = { workspace = true }
