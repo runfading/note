@@ -4,7 +4,8 @@ use common::models::notes::{
 };
 use sea_orm::prelude::TimeDateTime;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, Set,
+    ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, DbBackend, EntityTrait,
+    PaginatorTrait, QueryFilter, QueryOrder, Set, Statement,
 };
 use tags::note_tags::service::notes_with_tags;
 use time::OffsetDateTime;
@@ -45,15 +46,58 @@ pub async fn search_notes(
 ) -> AppResult<ApiPageData<NoteInfo>> {
     let page_num = query.page_num.max(1);
     let page_size = query.page_size.max(1);
-    let paginator = NoteEntity::find()
-        .filter(NoteColumn::Title.contains(query.keyword))
-        .order_by_desc(NoteColumn::UpdatedAt)
-        .paginate(pool, page_size);
-    let total = paginator.num_items().await?;
-    let data = paginator.fetch_page(page_num - 1).await?;
+
+    let keyword_chars = query.keyword.chars().count();
+    let note_ids: Vec<i64> = if keyword_chars < 3 {
+        NoteEntity::find()
+            .filter(
+                Condition::any()
+                    .add(NoteColumn::Title.contains(query.keyword.as_str()))
+                    .add(NoteColumn::Content.contains(query.keyword.as_str())),
+            )
+            .order_by_desc(NoteColumn::UpdatedAt)
+            .all(pool)
+            .await?
+            .into_iter()
+            .map(|n| n.id)
+            .collect()
+    } else {
+        let sql = r#"SELECT n.id FROM notes n
+                     JOIN notes_fts f ON f.rowid = n.id
+                     WHERE notes_fts MATCH $1
+                     ORDER BY n.updated_at DESC"#;
+        let rows = pool
+            .query_all_raw(Statement::from_sql_and_values(
+                DbBackend::Sqlite,
+                sql,
+                [query.keyword.clone().into()],
+            ))
+            .await?;
+        rows.into_iter()
+            .map(|r| r.try_get_by_index::<i64>(0).unwrap_or(0))
+            .collect()
+    };
+
+    let total = note_ids.len() as u64;
+    let start = ((page_num - 1) * page_size) as usize;
+    let page_ids: Vec<i64> = note_ids
+        .into_iter()
+        .skip(start)
+        .take(page_size as usize)
+        .collect();
+
+    let list = if page_ids.is_empty() {
+        Vec::new()
+    } else {
+        let notes = NoteEntity::find()
+            .filter(NoteColumn::Id.is_in(page_ids))
+            .all(pool)
+            .await?;
+        notes_with_tags(pool, notes).await?
+    };
 
     Ok(ApiResponse::ok(ApiPageData {
-        list: notes_with_tags(pool, data).await?,
+        list,
         page_num,
         page_size,
         total,

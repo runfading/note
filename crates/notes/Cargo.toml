@@ -10,3 +10,9 @@ time = { workspace = true }
 
 common = { workspace = true }
 tags = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+sea-orm = { workspace = true, features = ["sqlx-sqlite", "runtime-tokio"] }
+sea-orm-migration = { workspace = true }
+db = { workspace = true }
