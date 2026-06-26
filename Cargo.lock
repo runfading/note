@@ -2973,10 +2973,13 @@ name = "notes"
 version = "0.1.0"
 dependencies = [
  "common",
+ "db",
  "sea-orm",
+ "sea-orm-migration",
  "tags",
  "tauri",
  "time",
+ "tokio",
 ]
 
 [[package]]
