@@ -11,9 +11,7 @@ pub struct Settings {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct DatabaseConfig {
-    pub url: String,
-    pub max_connections: u32,
-    pub min_connections: u32,
+    pub filename: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -49,4 +47,23 @@ pub fn init_config() -> Result<(), config::ConfigError> {
     let settings = load_config()?;
     SETTINGS.set(settings).expect("配置初始化失败");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn database_config_deserializes_filename() {
+        let json = r#"{"filename":"note.db"}"#;
+        let cfg: DatabaseConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(cfg.filename, "note.db");
+    }
+
+    #[test]
+    fn database_config_has_no_url_field() {
+        let json = r#"{"filename":"x.db"}"#;
+        let cfg: DatabaseConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(cfg.filename, "x.db");
+    }
 }
