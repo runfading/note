@@ -1170,7 +1170,6 @@ version = "0.1.0"
 dependencies = [
  "common",
  "sea-orm",
- "serde",
  "tracing",
 ]
 
@@ -2860,7 +2859,6 @@ name = "notes"
 version = "0.1.0"
 dependencies = [
  "common",
- "db",
  "sea-orm",
  "tags",
  "tauri",

@@ -9,7 +9,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 
 #数据库
-sea-orm = { workspace = true, features = ["sqlx-postgres", "runtime-tokio", "macros", "mock", "with-time"] }
+sea-orm = { workspace = true, features = ["macros", "with-time"] }
 
 thiserror = { workspace = true }
 config = { workspace = true, features = ["toml"] }

@@ -1,8 +1,5 @@
 [workspace]
-members = [
-    "crates/*",
-    "core"
-]
+members = ["crates/*", "core"]
 resolver = "3"
 
 [workspace.package]
@@ -13,22 +10,22 @@ authors = ["rf"]
 edition = "2021"
 
 [workspace.dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2" }
 tauri-plugin-opener = "2"
 
 # 序列化
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1" }
 serde_json = "1"
 
 #数据库
-sea-orm = { version = "2.0.0-rc", features = ["sqlx-postgres", "runtime-tokio", "macros", "mock", "with-time"] }
+sea-orm = { version = "2.0.0-rc.41" }
 
 thiserror = "2.0.18"
-config = { version = "0.15.23", features = ["toml"] }
+config = { version = "0.15.23" }
 
 # 日志
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.23", features = ["env-filter", "time"] }
+tracing-subscriber = { version = "0.3.23" }
 tracing-appender = "0.2.5"
 
 time = "0.3.47"
