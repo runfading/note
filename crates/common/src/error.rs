@@ -21,14 +21,14 @@ pub enum AppError {
     NotFound(String),
 }
 
-impl Into<InvokeError> for AppError {
-    fn into(self) -> InvokeError {
+impl From<AppError> for InvokeError {
+    fn from(value: AppError) -> Self {
         // 先记录完整错误
-        if !matches!(self, AppError::NotFound(_) | AppError::BizError(_)) {
-            error!(error = ?self, "internal server error");
+        if !matches!(value, AppError::NotFound(_) | AppError::BizError(_)) {
+            error!(error = ?value, "internal server error");
         }
 
-        let (code, message) = match self {
+        let (code, message) = match value {
             AppError::NotFound(msg) => (0, msg),
             AppError::BizError(BizError { code, message }) => (code, message.to_string()),
             _ => (9999, "Internal Server Error".to_string()),
@@ -36,7 +36,7 @@ impl Into<InvokeError> for AppError {
 
         let response = ApiResponse::err(code, message);
         match serde_json::to_value(response) {
-            Ok(response) => InvokeError { 0: response },
+            Ok(response) => InvokeError(response),
             Err(err) => {
                 error!(
                     "{}",

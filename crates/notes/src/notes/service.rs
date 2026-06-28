@@ -32,7 +32,7 @@ pub async fn page_notes(pool: &DbPool, query: PageNotesQuery) -> AppResult<ApiPa
         .collect();
 
     Ok(ApiResponse::ok(ApiPageData {
-        list: list,
+        list,
         page_num,
         page_size,
         total,

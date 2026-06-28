@@ -35,12 +35,12 @@ impl Default for LogConfig {
 }
 
 pub fn load_config() -> Result<Settings, config::ConfigError> {
-    Ok(Config::builder()
+    Config::builder()
         .add_source(File::with_name("config/default"))
         .add_source(File::with_name("config/local").required(false))
         .add_source(Environment::with_prefix("APP"))
         .build()?
-        .try_deserialize()?)
+        .try_deserialize()
 }
 
 pub static SETTINGS: OnceLock<Settings> = OnceLock::new();

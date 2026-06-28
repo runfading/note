@@ -14,11 +14,11 @@ pub struct Model {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-impl Into<NotebookInfo> for Model {
-    fn into(self) -> NotebookInfo {
+impl From<Model> for NotebookInfo {
+    fn from(value: Model) -> Self {
         NotebookInfo {
-            id: self.id,
-            name: self.name,
+            id: value.id,
+            name: value.name,
         }
     }
 }

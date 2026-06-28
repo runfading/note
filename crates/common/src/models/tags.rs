@@ -13,11 +13,11 @@ pub struct Model {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-impl Into<TagInfo> for Model {
-    fn into(self) -> TagInfo {
+impl From<Model> for TagInfo {
+    fn from(value: Model) -> Self {
         TagInfo {
-            id: self.id,
-            name: self.name,
+            id: value.id,
+            name: value.name,
         }
     }
 }

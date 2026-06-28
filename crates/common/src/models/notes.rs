@@ -17,13 +17,13 @@ pub struct Model {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-impl Into<NoteInfo> for Model {
-    fn into(self) -> NoteInfo {
+impl From<Model> for NoteInfo {
+    fn from(value: Model) -> Self {
         NoteInfo {
-            id: self.id,
-            notebook_id: self.notebook_id,
-            title: self.title,
-            content: Some(self.content),
+            id: value.id,
+            notebook_id: value.notebook_id,
+            title: value.title,
+            content: Some(value.content),
             tags: Vec::new(),
         }
     }
