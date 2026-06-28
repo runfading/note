@@ -11,9 +11,7 @@ pub struct Settings {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct DatabaseConfig {
-    pub url: String,
-    pub max_connections: u32,
-    pub min_connections: u32,
+    pub filename: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
